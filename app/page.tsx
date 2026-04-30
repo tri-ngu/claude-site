@@ -1,63 +1,69 @@
-import Image from "next/image";
-
 export default function Home() {
+  const projects = [
+    {
+      id: "gravity-flip",
+      title: "Gravity Flip",
+      description: "A fast-paced browser game where you navigate obstacles while flipping gravity. Built with vanilla HTML5 Canvas.",
+      tech: ["HTML5", "Canvas", "JavaScript"],
+      link: "/projects/gravity-flip",
+    },
+    {
+      id: "grocery-planner",
+      title: "Grocery Planning Agent",
+      description: "AI-powered meal planning app that generates 14-day meal plans based on your food preferences and integrates with Walmart shopping.",
+      tech: ["Node.js", "Express", "Claude AI", "Anthropic SDK"],
+      link: "/projects/grocery-planner",
+    },
+    {
+      id: "diagram",
+      title: "Diagram Project",
+      description: "Interactive visualization and diagramming tool built with web technologies.",
+      tech: ["HTML5", "JavaScript"],
+      link: "/projects/diagram",
+    },
+  ];
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
+    <div className="min-h-screen bg-white dark:bg-black">
+      <header className="border-b border-zinc-200 dark:border-zinc-800">
+        <div className="max-w-6xl mx-auto px-6 py-12">
+          <h1 className="text-4xl font-bold text-black dark:text-white mb-2">
+            Projects
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+          <p className="text-lg text-zinc-600 dark:text-zinc-400">
+            A collection of web projects built with modern technologies.
           </p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+      </header>
+
+      <main className="max-w-6xl mx-auto px-6 py-16">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {projects.map((project) => (
+            <a
+              key={project.id}
+              href={project.link}
+              className="group relative overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50 p-6 hover:border-zinc-300 dark:hover:border-zinc-700 hover:shadow-md transition-all duration-200"
+            >
+              <div className="flex flex-col h-full">
+                <h2 className="text-xl font-semibold text-black dark:text-white mb-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                  {project.title}
+                </h2>
+                <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-4 flex-grow">
+                  {project.description}
+                </p>
+                <div className="flex flex-wrap gap-2 pt-4 border-t border-zinc-200 dark:border-zinc-800">
+                  {project.tech.map((tech) => (
+                    <span
+                      key={tech}
+                      className="inline-block text-xs font-medium px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded"
+                    >
+                      {tech}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </a>
+          ))}
         </div>
       </main>
     </div>

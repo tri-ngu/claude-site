@@ -1,0 +1,1159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>How AI Agents Work</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,500;0,600;0,700;0,800&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background: #06080f;
+  color: #e2e8f0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+header {
+  padding: 12px 24px;
+  border-bottom: 1px solid #141824;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: linear-gradient(180deg,#0a0d18 0%,#080b14 100%);
+}
+.hdr-logo {
+  width: 30px; height: 30px;
+  background: linear-gradient(135deg,#4f46e5,#818cf8);
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.9rem; flex-shrink: 0;
+}
+header h1 { font-size: 1rem; font-weight: 700; color: #f1f5f9; }
+header p  { font-size: 0.76rem; color: #4a5568; }
+.hdr-gap  { flex: 1; }
+.hdr-hint {
+  font-size: 0.68rem; color: #2d3748;
+  background: #0a0d16; border: 1px solid #1a2035;
+  padding: 4px 11px; border-radius: 20px;
+}
+
+#main { display: flex; flex: 1; overflow: hidden; min-height: 0; }
+
+#canvas-wrap {
+  flex: 1; position: relative; overflow: hidden;
+  background: #070a11; min-width: 0;
+}
+#canvas-wrap::after {
+  content: ''; position: absolute; inset: 0;
+  background: radial-gradient(ellipse at 38% 50%, rgba(99,102,241,.06) 0%, transparent 65%);
+  pointer-events: none; z-index: 0;
+}
+#diagram {
+  position: absolute; top: 0; left: 0;
+  width: 100%; height: 100%;
+  cursor: grab; user-select: none; z-index: 1;
+}
+#diagram.panning { cursor: grabbing; }
+
+#zoom-controls {
+  position: absolute; bottom: 18px; right: 18px;
+  display: flex; flex-direction: column; gap: 4px; z-index: 10;
+}
+.zoom-btn {
+  width: 32px; height: 32px;
+  background: rgba(10,13,22,.92);
+  border: 1px solid #1e2a3a; color: #4a5568;
+  border-radius: 8px; cursor: pointer;
+  font-size: 1rem; line-height: 1;
+  display: flex; align-items: center; justify-content: center;
+  transition: all .15s; backdrop-filter: blur(6px);
+}
+.zoom-btn:hover { background: #1a2035; color: #94a3b8; border-color: #2d3748; }
+.zoom-sep { height: 4px; }
+
+#summary-trigger {
+  position: absolute; bottom: 18px; left: 50%; transform: translateX(-50%);
+  padding: 8px 18px;
+  background: #13112e; border: 1px solid #4f46e5;
+  color: #818cf8; border-radius: 20px;
+  font-size: 0.78rem; font-weight: 600;
+  cursor: pointer; z-index: 10;
+  display: none; transition: all .2s; white-space: nowrap;
+}
+#summary-trigger.show { display: block; }
+#summary-trigger:hover { background: #1e1b4b; }
+
+#info-panel {
+  width: 300px; flex-shrink: 0;
+  padding: 22px 20px;
+  border-left: 1px solid #141824;
+  display: flex; flex-direction: column;
+  gap: 12px; overflow-y: auto;
+  background: #080b14;
+}
+.stage-badge {
+  display: inline-flex; align-items: center;
+  font-size: 0.63rem; font-weight: 700;
+  letter-spacing: .09em; text-transform: uppercase;
+  color: #818cf8; background: #13112e;
+  border: 1px solid #2e2a7a;
+  padding: 3px 10px; border-radius: 20px; width: fit-content;
+}
+#stage-title { font-size: 1.05rem; font-weight: 700; color: #f1f5f9; line-height: 1.3; }
+#step-label  { font-size: 0.68rem; color: #2d3748; }
+.divider     { height: 1px; background: #141824; }
+#stage-desc  { font-size: 0.83rem; color: #7d8fa8; line-height: 1.75; transition: opacity .15s; }
+
+details.deeper {
+  border: 1px solid #141824; border-radius: 9px;
+  overflow: hidden; background: #0a0d16; margin-top: auto;
+}
+details.deeper summary {
+  padding: 9px 14px;
+  font-size: 0.71rem; font-weight: 600; color: #374151;
+  cursor: pointer; user-select: none;
+  display: flex; align-items: center; gap: 6px; list-style: none;
+}
+details.deeper summary::-webkit-details-marker { display: none; }
+.da { font-size: .6rem; transition: transform .2s; }
+details.deeper[open] .da { transform: rotate(90deg); }
+details.deeper summary:hover { color: #4a5568; }
+#deeper-text {
+  padding: 10px 14px;
+  font-size: 0.73rem; color: #374151; line-height: 1.7;
+  border-top: 1px solid #141824;
+}
+
+#controls {
+  padding: 10px 20px; border-top: 1px solid #141824;
+  background: #060810;
+  display: flex; align-items: center; gap: 12px; flex-shrink: 0;
+}
+.ctrl-btn {
+  background: #0a0d16; border: 1px solid #1a2035;
+  color: #4a5568; width: 34px; height: 34px;
+  border-radius: 8px; cursor: pointer; font-size: .85rem;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; transition: all .15s;
+}
+.ctrl-btn:hover { background: #141824; color: #94a3b8; border-color: #2d3748; }
+#btn-play {
+  width: 40px; background: #13112e; border-color: #2e2a7a; color: #818cf8;
+}
+#btn-play:hover { background: #1e1b4b; color: #a5b4fc; }
+#scrubber-wrap { flex: 1; display: flex; flex-direction: column; gap: 5px; }
+#scrubber { width: 100%; accent-color: #6366f1; cursor: pointer; height: 3px; }
+#stage-markers { display: flex; font-size: .6rem; color: #1e2433; }
+.smark {
+  flex: 1; text-align: center;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  padding: 0 2px; cursor: pointer; transition: color .2s;
+}
+.smark:hover { color: #374151; }
+.smark.active { color: #6366f1; font-weight: 700; }
+#speed-sel {
+  background: #0a0d16; border: 1px solid #1a2035;
+  color: #4a5568; font-size: .72rem;
+  padding: 5px 8px; border-radius: 7px;
+  cursor: pointer; flex-shrink: 0;
+}
+
+/* ── SVG element visibility ── */
+.node, .arrow { transition: opacity .5s ease; }
+.node.hidden, .arrow.hidden { opacity: 0; pointer-events: none; }
+.node.visible, .arrow.visible { opacity: 1; }
+.arrow.visible { cursor: pointer; }
+
+/* ── Node shapes ── */
+.nLLM   rect    { fill: url(#gLLM);   stroke: #818cf8; stroke-width: 1.8; }
+.nAgent rect    { fill: url(#gAgent); stroke: #7c7aff; stroke-width: 1.5; }
+.nTool  polygon { fill: url(#gTool);  stroke: #fbbf24; stroke-width: 1.8; }
+.nMem   circle  { fill: url(#gMem);   stroke: #2dd4bf; stroke-width: 1.8; }
+.nUser  rect    { fill: url(#gUser);  stroke: #94a3b8; stroke-width: 1.5; }
+.nHuman circle  { fill: url(#gUser);  stroke: #94a3b8; stroke-width: 1.5; }
+.nDec   polygon { fill: url(#gDec);   stroke: #f87171; stroke-width: 1.6; }
+.nErr   circle  { fill: url(#gErr);   stroke: #fca5a5; stroke-width: 1.2; }
+
+.node text     { fill: #e2e8f0; font-family: 'Inter', system-ui, sans-serif; pointer-events: none; }
+.node .sub     { fill: #8fa3bc; }
+.node .ico     { fill: #ffffff22; font-size: 10px; }
+.node.clickable { cursor: pointer; }
+
+/* ── Arrow lines ── */
+.aLine { stroke: #2a3b50; stroke-width: 2; fill: none; }
+.aLine.tool  { stroke: #92400e; }
+.aLine.mem   { stroke: #0d5e59; }
+.aLine.agent { stroke: #3730a3; }
+.aLine.err   { stroke: #991b1b; }
+.aLine.grn   { stroke: #166534; }
+
+/* Invisible wide hit area for click detection */
+.hit { stroke: transparent; stroke-width: 18; fill: none; cursor: pointer; }
+
+/* Arrow labels — paint-order halo keeps text readable over any background */
+.arrow text {
+  font-family: 'Inter', system-ui, sans-serif;
+  pointer-events: none;
+  paint-order: stroke fill;
+  stroke: #070a11;
+  stroke-width: 7;
+  stroke-linejoin: round;
+}
+
+/* ── Node glow animation ── */
+@keyframes glow-pulse {
+  0%,100% { filter: drop-shadow(0 0 5px currentColor); }
+  50%      { filter: drop-shadow(0 0 18px currentColor) drop-shadow(0 0 5px currentColor); }
+}
+.glow { animation: glow-pulse 1.2s ease-in-out infinite; }
+.nLLM.glow   { color: #6366f1; }
+.nTool.glow  { color: #f59e0b; }
+.nMem.glow   { color: #14b8a6; }
+.nAgent.glow { color: #818cf8; }
+.nUser.glow, .nHuman.glow { color: #64748b; }
+
+/* ── Arrow glow — brightness+shadow so stroke actually lights up ── */
+@keyframes aglow   { 0%,100%{filter:brightness(2.2) drop-shadow(0 0 5px #94a3b8)} 50%{filter:brightness(3.5) drop-shadow(0 0 14px #94a3b8)} }
+@keyframes aglow-a { 0%,100%{filter:brightness(2.2) drop-shadow(0 0 5px #f59e0b)} 50%{filter:brightness(3.5) drop-shadow(0 0 14px #f59e0b)} }
+@keyframes aglow-t { 0%,100%{filter:brightness(2.2) drop-shadow(0 0 5px #14b8a6)} 50%{filter:brightness(3.5) drop-shadow(0 0 14px #14b8a6)} }
+@keyframes aglow-i { 0%,100%{filter:brightness(2.2) drop-shadow(0 0 5px #818cf8)} 50%{filter:brightness(3.5) drop-shadow(0 0 14px #818cf8)} }
+@keyframes aglow-r { 0%,100%{filter:brightness(2.2) drop-shadow(0 0 5px #ef4444)} 50%{filter:brightness(3.5) drop-shadow(0 0 14px #ef4444)} }
+
+.arrow.glow              { animation: aglow   1.2s ease-in-out infinite; }
+.arrow.tool.glow         { animation: aglow-a 1.2s ease-in-out infinite; }
+.arrow.mem.glow          { animation: aglow-t 1.2s ease-in-out infinite; }
+.arrow.agent.glow        { animation: aglow-i 1.2s ease-in-out infinite; }
+
+/* Adjacent highlight when node modal open */
+.adj rect, .adj circle, .adj polygon {
+  stroke-width: 2.8 !important;
+  filter: drop-shadow(0 0 10px currentColor);
+}
+.nLLM.adj   { color: #6366f1; }
+.nTool.adj  { color: #f59e0b; }
+.nMem.adj   { color: #14b8a6; }
+.nAgent.adj { color: #818cf8; }
+.nUser.adj, .nHuman.adj { color: #64748b; }
+.nDec.adj   { color: #ef4444; }
+
+#react-badge { transition: opacity .4s; }
+#dot { pointer-events: none; }
+
+/* ── Arrow Tooltip ── */
+#arrow-tip {
+  position: fixed;
+  max-width: 270px;
+  background: #0e1120;
+  border: 1px solid #252d40;
+  border-radius: 11px;
+  padding: 14px 16px;
+  z-index: 250;
+  pointer-events: none;
+  box-shadow: 0 16px 48px rgba(0,0,0,.75);
+  display: none;
+}
+#arrow-tip.show { display: block; }
+.at-header { display: flex; align-items: center; gap: 8px; margin-bottom: 7px; }
+.at-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.at-label { font-size: .85rem; font-weight: 700; color: #f1f5f9; }
+.at-desc  { font-size: .76rem; color: #6b7fa0; line-height: 1.65; }
+
+/* ── Node Modal ── */
+.modal-bd { position: fixed; inset: 0; z-index: 299; background: rgba(0,0,0,.45); display: none; }
+.modal-bd.open { display: block; }
+#node-modal {
+  position: fixed; top: 50%; left: 50%;
+  transform: translate(-50%,-50%);
+  width: 370px; max-width: calc(100vw - 32px);
+  background: #0e1120; border: 1px solid #1e2a3a;
+  border-radius: 16px; overflow: hidden; z-index: 300;
+  box-shadow: 0 28px 80px rgba(0,0,0,.85), 0 0 0 1px rgba(255,255,255,.03);
+  display: none;
+}
+#node-modal.open { display: block; }
+.m-head { padding: 18px 20px; border-bottom: 1px solid #141824; display: flex; align-items: flex-start; gap: 12px; }
+.m-bar { width: 4px; height: 42px; border-radius: 2px; flex-shrink: 0; }
+.m-titles { flex: 1; }
+.m-type { font-size: .6rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: #374151; margin-bottom: 4px; }
+.m-name { font-size: 1.05rem; font-weight: 700; color: #f1f5f9; }
+.m-close { background: none; border: none; color: #2d3748; font-size: 1.3rem; cursor: pointer; padding: 0; line-height: 1; }
+.m-close:hover { color: #94a3b8; }
+.m-body { padding: 18px 20px; }
+.m-desc { font-size: .81rem; color: #6b7fa0; line-height: 1.8; margin-bottom: 16px; }
+.m-ct { font-size: .62rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #2d3748; margin-bottom: 8px; }
+.m-conns { display: flex; flex-direction: column; gap: 6px; }
+.m-conn {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 11px; background: #090c16; border: 1px solid #141824;
+  border-radius: 8px; cursor: pointer; transition: all .15s;
+}
+.m-conn:hover { border-color: #2d3748; background: #0e1120; }
+.m-cdot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.m-cname { font-size: .78rem; font-weight: 600; color: #7d8fa8; }
+.m-crel  { font-size: .67rem; color: #2d3748; margin-top: 2px; }
+
+/* ── Summary Overlay ── */
+#summary-overlay {
+  position: fixed; inset: 0;
+  background: rgba(4,6,12,.97);
+  z-index: 400; overflow-y: auto;
+  display: none; flex-direction: column;
+  align-items: center; padding: 44px 24px 40px;
+}
+#summary-overlay.open { display: flex; }
+.so-badge {
+  font-size: .62rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
+  color: #6366f1; background: #13112e; border: 1px solid #2e2a7a;
+  padding: 3px 12px; border-radius: 20px; margin-bottom: 14px;
+}
+.so-title { font-size: 2rem; font-weight: 800; color: #f1f5f9; letter-spacing: -.02em; margin-bottom: 10px; text-align: center; }
+.so-sub { font-size: .86rem; color: #374151; max-width: 500px; text-align: center; line-height: 1.6; margin-bottom: 36px; }
+.so-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; width: 100%; max-width: 840px; margin-bottom: 34px; }
+@media (max-width: 680px) { .so-grid { grid-template-columns: repeat(2,1fr); } }
+.sc { background: #090c17; border: 1px solid #141824; border-radius: 14px; padding: 20px; position: relative; overflow: hidden; }
+.sc::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; }
+.sc.s1::before { background: #6366f1; } .sc.s2::before { background: #f59e0b; }
+.sc.s3::before { background: #818cf8; } .sc.s4::before { background: #14b8a6; }
+.sc.s5::before { background: #a78bfa; } .sc.s6::before { background: #ef4444; }
+.sc-ico  { font-size: 1.5rem; margin-bottom: 10px; }
+.sc-num  { font-size: .6rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #2d3748; margin-bottom: 6px; }
+.sc-title{ font-size: .92rem; font-weight: 700; color: #c4d0e6; margin-bottom: 7px; }
+.sc-desc { font-size: .76rem; color: #374151; line-height: 1.65; }
+.so-acts { display: flex; gap: 12px; }
+.so-btn { padding: 11px 22px; border-radius: 9px; font-size: .83rem; font-weight: 600; cursor: pointer; transition: all .15s; }
+.so-btn-p { background: #4f46e5; border: 1px solid #6366f1; color: #fff; }
+.so-btn-p:hover { background: #4338ca; }
+.so-btn-s { background: #0a0d16; border: 1px solid #1a2035; color: #4a5568; }
+.so-btn-s:hover { background: #141824; color: #94a3b8; }
+
+@media (prefers-reduced-motion: reduce) {
+  .node, .arrow { transition: none; }
+  .glow { animation: none; filter: none; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="hdr-logo">⬡</div>
+  <h1>How AI Agents Work</h1>
+  <p>An interactive walkthrough — from a simple chat to a full multi-agent system</p>
+  <div class="hdr-gap"></div>
+  <div class="hdr-hint">Click nodes or arrows for details &nbsp;·&nbsp; Scroll to zoom</div>
+</header>
+
+<div id="main">
+  <div id="canvas-wrap">
+    <svg id="diagram" viewBox="0 0 1300 740" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
+    <defs>
+      <!-- Background grid -->
+      <pattern id="dot-grid" width="40" height="40" patternUnits="userSpaceOnUse">
+        <circle cx="1" cy="1" r="0.8" fill="#ffffff06"/>
+      </pattern>
+
+      <!-- Node fill gradients — vibrant top, deep bottom -->
+      <linearGradient id="gLLM"   x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%"   stop-color="#5850e8"/>
+        <stop offset="100%" stop-color="#2d27a6"/>
+      </linearGradient>
+      <linearGradient id="gAgent" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%"   stop-color="#4338ca"/>
+        <stop offset="100%" stop-color="#1e1b80"/>
+      </linearGradient>
+      <linearGradient id="gTool"  x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%"   stop-color="#b45309"/>
+        <stop offset="100%" stop-color="#431407"/>
+      </linearGradient>
+      <linearGradient id="gMem"   x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%"   stop-color="#0f766e"/>
+        <stop offset="100%" stop-color="#042f2e"/>
+      </linearGradient>
+      <linearGradient id="gUser"  x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%"   stop-color="#1e3a52"/>
+        <stop offset="100%" stop-color="#0f1e2e"/>
+      </linearGradient>
+      <linearGradient id="gDec"   x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%"   stop-color="#991b1b"/>
+        <stop offset="100%" stop-color="#450a0a"/>
+      </linearGradient>
+      <linearGradient id="gErr"   x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%"   stop-color="#ef4444"/>
+        <stop offset="100%" stop-color="#b91c1c"/>
+      </linearGradient>
+
+      <!-- Shine overlay: top-center radial highlight, no visible edge -->
+      <radialGradient id="shine-r" cx="0.5" cy="0.05" r="0.85" gradientUnits="objectBoundingBox">
+        <stop offset="0%"   stop-color="#ffffff" stop-opacity="0.22"/>
+        <stop offset="55%"  stop-color="#ffffff" stop-opacity="0.05"/>
+        <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+      </radialGradient>
+
+      <!-- Node drop-shadow filter -->
+      <filter id="nshadow" x="-20%" y="-20%" width="140%" height="140%">
+        <feDropShadow dx="0" dy="4" stdDeviation="10" flood-color="#000" flood-opacity="0.6"/>
+      </filter>
+
+      <!-- Arrowheads -->
+      <marker id="ah"   markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#2a3b50"/></marker>
+      <marker id="ah-i" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#3730a3"/></marker>
+      <marker id="ah-a" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#92400e"/></marker>
+      <marker id="ah-t" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#0d5e59"/></marker>
+      <marker id="ah-r" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#991b1b"/></marker>
+      <marker id="ah-g" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#166534"/></marker>
+    </defs>
+
+    <rect width="1300" height="740" fill="url(#dot-grid)"/>
+
+    <g id="zoom-g">
+
+      <!-- ══════════ ARROWS (drawn before nodes so nodes sit on top) ══════════ -->
+
+      <!-- S1: User → LLM — label above the line, in the gap between nodes -->
+      <g id="a-ul" class="arrow hidden">
+        <path id="p-ul" class="aLine" d="M 142,332 L 200,332" marker-end="url(#ah)"/>
+        <path class="hit" d="M 142,332 L 200,332"/>
+        <text x="171" y="323" text-anchor="middle" font-size="10" fill="#4a6070">message</text>
+      </g>
+
+      <!-- S1: LLM → User — label below the line, in the gap between nodes -->
+      <g id="a-lu" class="arrow hidden">
+        <path id="p-lu" class="aLine" d="M 200,348 L 142,348" marker-end="url(#ah)"/>
+        <path class="hit" d="M 200,348 L 142,348"/>
+        <text x="171" y="362" text-anchor="middle" font-size="10" fill="#4a6070">response</text>
+      </g>
+
+      <!-- S2: LLM → Web Search — label at midpoint of path -->
+      <g id="a-ls" class="arrow tool hidden">
+        <path id="p-ls" class="aLine tool" d="M 395,313 L 652,165" marker-end="url(#ah-a)"/>
+        <path class="hit" d="M 395,313 L 652,165"/>
+        <text x="523" y="239" text-anchor="middle" font-size="10" fill="#b45309" stroke="#080b12" stroke-width="3" paint-order="stroke fill">tool call</text>
+      </g>
+
+      <!-- S2: Web Search → LLM — label at midpoint of path -->
+      <g id="a-sl" class="arrow tool hidden">
+        <path id="p-sl" class="aLine tool" d="M 652,159 L 395,299" marker-end="url(#ah-a)"/>
+        <path class="hit" d="M 652,159 L 395,299"/>
+        <text x="523" y="248" text-anchor="middle" font-size="10" fill="#b45309">results</text>
+      </g>
+
+      <!-- S2: LLM → Code Runner — label at midpoint of path -->
+      <g id="a-lc" class="arrow tool hidden">
+        <path id="p-lc" class="aLine tool" d="M 395,367 L 652,545" marker-end="url(#ah-a)"/>
+        <path class="hit" d="M 395,367 L 652,545"/>
+        <text x="523" y="448" text-anchor="middle" font-size="10" fill="#b45309">tool call</text>
+      </g>
+
+      <!-- S2: Code Runner → LLM — label at midpoint of path -->
+      <g id="a-cl" class="arrow tool hidden">
+        <path id="p-cl" class="aLine tool" d="M 652,551 L 395,381" marker-end="url(#ah-a)"/>
+        <path class="hit" d="M 652,551 L 395,381"/>
+        <text x="523" y="475" text-anchor="middle" font-size="10" fill="#b45309">results</text>
+      </g>
+
+      <!-- S3: ReAct loop — bottom of LLM, large visible arc with label -->
+      <g id="a-react" class="arrow hidden">
+        <path id="p-react" class="aLine" stroke="#3730a3" stroke-width="2.5" stroke-dasharray="5,3"
+              d="M 245,381 C 220,455 375,455 350,381" marker-end="url(#ah-i)"/>
+        <path class="hit" d="M 245,381 C 220,455 375,455 350,381"/>
+        <text x="297" y="468" text-anchor="middle" font-size="10" fill="#818cf8">ReAct</text>
+      </g>
+
+      <!-- S4: LLM → Memory — label left of arrow, in the gap between nodes -->
+      <g id="a-lm" class="arrow mem hidden">
+        <path id="p-lm" class="aLine mem" d="M 280,299 L 280,213" marker-end="url(#ah-t)"/>
+        <path class="hit" d="M 280,299 L 280,213"/>
+        <text x="268" y="258" text-anchor="end" font-size="10" fill="#0d9488">query</text>
+      </g>
+
+      <!-- S4: Memory → LLM — label right of arrow, in the gap between nodes -->
+      <g id="a-ml" class="arrow mem hidden">
+        <path id="p-ml" class="aLine mem" d="M 314,213 L 314,299" marker-end="url(#ah-t)"/>
+        <path class="hit" d="M 314,213 L 314,299"/>
+        <text x="326" y="258" text-anchor="start" font-size="10" fill="#0d9488">recall</text>
+      </g>
+
+      <!-- S5: Orchestrator ↔ Agents — symmetric fan around LLM center y=340 -->
+      <g id="a-oa" class="arrow hidden">
+        <path id="p-oa" class="aLine agent" d="M 395,316 L 920,210" marker-end="url(#ah-i)"/>
+        <path class="hit" d="M 395,316 L 920,210"/>
+      </g>
+      <g id="a-ao" class="arrow hidden">
+        <path id="p-ao" class="aLine agent" d="M 920,216 L 395,325" marker-end="url(#ah-i)"/>
+        <path class="hit" d="M 920,216 L 395,325"/>
+      </g>
+      <g id="a-ob" class="arrow hidden">
+        <path id="p-ob" class="aLine agent" d="M 395,340 L 920,340" marker-end="url(#ah-i)"/>
+        <path class="hit" d="M 395,340 L 920,340"/>
+      </g>
+      <g id="a-bo" class="arrow hidden">
+        <path id="p-bo" class="aLine agent" d="M 920,346 L 395,349" marker-end="url(#ah-i)"/>
+        <path class="hit" d="M 920,346 L 395,349"/>
+      </g>
+      <g id="a-oc" class="arrow hidden">
+        <path id="p-oc" class="aLine agent" d="M 395,364 L 920,470" marker-end="url(#ah-i)"/>
+        <path class="hit" d="M 395,364 L 920,470"/>
+      </g>
+      <g id="a-co" class="arrow hidden">
+        <path id="p-co" class="aLine agent" d="M 920,476 L 395,373" marker-end="url(#ah-i)"/>
+        <path class="hit" d="M 920,476 L 395,373"/>
+      </g>
+
+      <!-- S5: Researcher → Search — label at midpoint -->
+      <g id="a-as" class="arrow hidden">
+        <path id="p-as" class="aLine tool" d="M 920,210 L 748,171" marker-end="url(#ah-a)"/>
+        <path class="hit" d="M 920,210 L 748,171"/>
+        <text x="834" y="183" text-anchor="middle" font-size="10" fill="#b45309">search</text>
+      </g>
+
+      <!-- S6: Failure path — curves down from LLM to Decision diamond -->
+      <g id="a-ed" class="arrow hidden">
+        <path id="p-ed" class="aLine err" stroke-dasharray="5,3"
+              d="M 395,381 C 510,575 620,645 646,665" marker-end="url(#ah-r)"/>
+        <path class="hit" d="M 395,381 C 510,575 620,645 646,665"/>
+        <text x="490" y="554" text-anchor="middle" font-size="10" fill="#991b1b">failure</text>
+      </g>
+
+      <!-- S6: Decision → Human — label above the line -->
+      <g id="a-dh" class="arrow hidden">
+        <path id="p-dh" class="aLine" d="M 714,665 L 940,665" marker-end="url(#ah)"/>
+        <path class="hit" d="M 714,665 L 940,665"/>
+        <text x="827" y="655" text-anchor="middle" font-size="10" fill="#4a6070">escalate</text>
+      </g>
+
+      <!-- S6: Decision → retry — curves left and up back to LLM, passing left of Code hex -->
+      <g id="a-dr" class="arrow hidden">
+        <path id="p-dr" class="aLine grn" stroke="#166534"
+              d="M 680,640 C 630,565 395,505 395,360" marker-end="url(#ah-g)"/>
+        <path class="hit" d="M 680,640 C 630,565 395,505 395,360"/>
+        <text x="518" y="512" text-anchor="middle" font-size="10" fill="#166534">retry</text>
+      </g>
+
+      <!-- ══════════ NODES ══════════ -->
+
+      <!-- User: rect (30,312) 112×56 — center y=340 -->
+      <g id="n-user" class="node hidden nUser clickable" filter="url(#nshadow)">
+        <rect x="30" y="312" width="112" height="56" rx="11"/>
+        <rect x="30" y="312" width="112" height="56" rx="11" fill="url(#shine-r)" style="pointer-events:none"/>
+        <circle cx="86" cy="322" r="7.5" fill="none" stroke="#94a3b8" stroke-width="1.8" opacity="0.8" style="pointer-events:none"/>
+        <path d="M 70,340 Q 86,333 102,340" fill="none" stroke="#94a3b8" stroke-width="1.8" stroke-linecap="round" opacity="0.8" style="pointer-events:none"/>
+        <text x="86" y="359" text-anchor="middle" font-size="12" font-weight="600">User</text>
+      </g>
+
+      <!-- LLM / Orchestrator: rect (200,299) 195×82 — center y=340 -->
+      <g id="n-llm" class="node hidden nLLM clickable" filter="url(#nshadow)">
+        <rect x="200" y="299" width="195" height="82" rx="13"/>
+        <rect x="200" y="299" width="195" height="82" rx="13" fill="url(#shine-r)" style="pointer-events:none"/>
+        <rect x="283" y="307" width="28" height="19" rx="4" fill="none" stroke="#a5b4fc" stroke-width="1.8" opacity="0.65" style="pointer-events:none"/>
+        <rect x="289" y="311" width="16" height="11" rx="2" fill="#a5b4fc" fill-opacity="0.15" style="pointer-events:none"/>
+        <circle cx="292" cy="317" r="1.8" fill="#a5b4fc" fill-opacity="0.65" style="pointer-events:none"/>
+        <circle cx="297" cy="317" r="1.8" fill="#a5b4fc" fill-opacity="0.65" style="pointer-events:none"/>
+        <circle cx="302" cy="317" r="1.8" fill="#a5b4fc" fill-opacity="0.65" style="pointer-events:none"/>
+        <text id="llm-title" x="297" y="342" text-anchor="middle" font-size="15" font-weight="700">LLM</text>
+        <text id="llm-sub"   x="297" y="359" text-anchor="middle" class="sub" font-size="11">AI Model</text>
+      </g>
+
+      <!-- Web Search hex: center (700,165) r=55 — vertical section y=138-193 -->
+      <g id="n-search" class="node hidden nTool clickable" filter="url(#nshadow)">
+        <polygon points="700,110 748,138 748,193 700,220 652,193 652,138"/>
+        <polygon points="700,110 748,138 748,193 700,220 652,193 652,138" fill="url(#shine-r)" style="pointer-events:none"/>
+        <!-- magnifier within vertical section y=138-193 -->
+        <circle cx="700" cy="151" r="11" fill="none" stroke="#fcd34d" stroke-width="2" opacity="0.75" style="pointer-events:none"/>
+        <line x1="709" y1="160" x2="716" y2="167" stroke="#fcd34d" stroke-width="2.5" stroke-linecap="round" opacity="0.75" style="pointer-events:none"/>
+        <text x="700" y="186" text-anchor="middle" font-size="11" font-weight="600">Web Search</text>
+      </g>
+
+      <!-- Code Runner hex: center (700,545) r=55 — vertical section y=518-573 -->
+      <g id="n-code" class="node hidden nTool clickable" filter="url(#nshadow)">
+        <polygon points="700,490 748,518 748,573 700,600 652,573 652,518"/>
+        <polygon points="700,490 748,518 748,573 700,600 652,573 652,518" fill="url(#shine-r)" style="pointer-events:none"/>
+        <!-- terminal icon within vertical section y=518-573 -->
+        <rect x="674" y="521" width="52" height="28" rx="4" fill="none" stroke="#fcd34d" stroke-width="1.8" opacity="0.65" style="pointer-events:none"/>
+        <rect x="674" y="521" width="52" height="9" rx="4" fill="#fcd34d" fill-opacity="0.13" style="pointer-events:none"/>
+        <circle cx="681" cy="525" r="2" fill="#fcd34d" fill-opacity="0.45" style="pointer-events:none"/>
+        <circle cx="689" cy="525" r="2" fill="#fcd34d" fill-opacity="0.45" style="pointer-events:none"/>
+        <circle cx="697" cy="525" r="2" fill="#fcd34d" fill-opacity="0.45" style="pointer-events:none"/>
+        <text x="678" y="543" text-anchor="start" font-size="10" font-weight="700" fill="#fcd34d" fill-opacity="0.75" font-family="monospace" style="pointer-events:none">›_</text>
+        <text x="700" y="565" text-anchor="middle" font-size="11" font-weight="600">Code Runner</text>
+      </g>
+
+      <!-- Memory circle: center (297,160) r=53 — top y=107 -->
+      <g id="n-mem" class="node hidden nMem clickable" filter="url(#nshadow)">
+        <circle cx="297" cy="160" r="53"/>
+        <circle cx="297" cy="160" r="53" fill="url(#shine-r)" style="pointer-events:none"/>
+        <ellipse cx="297" cy="133" rx="18" ry="5.5" fill="none" stroke="#5eead4" stroke-width="1.8" opacity="0.75" style="pointer-events:none"/>
+        <ellipse cx="297" cy="143" rx="18" ry="5.5" fill="none" stroke="#5eead4" stroke-width="1.8" opacity="0.55" style="pointer-events:none"/>
+        <ellipse cx="297" cy="153" rx="18" ry="5.5" fill="none" stroke="#5eead4" stroke-width="1.8" opacity="0.35" style="pointer-events:none"/>
+        <text x="297" y="173" text-anchor="middle" font-size="11" font-weight="700">Memory</text>
+        <text x="297" y="187" text-anchor="middle" class="sub" font-size="10">Store</text>
+      </g>
+
+      <!-- Researcher: rect (920,184) 192×52 — center y=210 -->
+      <g id="n-agentA" class="node hidden nAgent clickable" filter="url(#nshadow)">
+        <rect x="920" y="184" width="192" height="52" rx="10"/>
+        <rect x="920" y="184" width="192" height="52" rx="10" fill="url(#shine-r)" style="pointer-events:none"/>
+        <circle cx="943" cy="205" r="7" fill="none" stroke="#a5b4fc" stroke-width="1.6" opacity="0.7" style="pointer-events:none"/>
+        <line x1="948" y1="210" x2="954" y2="216" stroke="#a5b4fc" stroke-width="2" stroke-linecap="round" opacity="0.7" style="pointer-events:none"/>
+        <text x="969" y="208" text-anchor="start" font-size="12" font-weight="700">Researcher</text>
+        <text x="969" y="224" text-anchor="start" class="sub" font-size="10">Finds information</text>
+      </g>
+
+      <!-- Coder: rect (920,314) 192×52 — center y=340 (aligned with LLM) -->
+      <g id="n-agentB" class="node hidden nAgent clickable" filter="url(#nshadow)">
+        <rect x="920" y="314" width="192" height="52" rx="10"/>
+        <rect x="920" y="314" width="192" height="52" rx="10" fill="url(#shine-r)" style="pointer-events:none"/>
+        <text x="943" y="347" text-anchor="middle" font-size="14" font-weight="700" fill="#a5b4fc" fill-opacity="0.65" font-family="monospace" style="pointer-events:none">&lt;/&gt;</text>
+        <text x="969" y="338" text-anchor="start" font-size="12" font-weight="700">Coder</text>
+        <text x="969" y="354" text-anchor="start" class="sub" font-size="10">Writes &amp; runs code</text>
+      </g>
+
+      <!-- Critic: rect (920,444) 192×52 — center y=470 -->
+      <g id="n-agentC" class="node hidden nAgent clickable" filter="url(#nshadow)">
+        <rect x="920" y="444" width="192" height="52" rx="10"/>
+        <rect x="920" y="444" width="192" height="52" rx="10" fill="url(#shine-r)" style="pointer-events:none"/>
+        <circle cx="943" cy="468" r="7.5" fill="none" stroke="#a5b4fc" stroke-width="1.6" opacity="0.7" style="pointer-events:none"/>
+        <path d="M 939,468 L 942,471 L 948,464" fill="none" stroke="#a5b4fc" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" opacity="0.75" style="pointer-events:none"/>
+        <text x="969" y="466" text-anchor="start" font-size="12" font-weight="700">Critic</text>
+        <text x="969" y="482" text-anchor="start" class="sub" font-size="10">Reviews output</text>
+      </g>
+
+      <!-- Error badge: upper-right corner of Search hex (vertex 748,138) -->
+      <g id="n-err" class="node hidden nErr clickable" filter="url(#nshadow)">
+        <circle cx="752" cy="125" r="13"/>
+        <text x="752" y="130" text-anchor="middle" font-size="12" font-weight="800" fill="#fff" style="pointer-events:none">✕</text>
+      </g>
+
+      <!-- Decision diamond: center (680,665) -->
+      <g id="n-dec" class="node hidden nDec clickable" filter="url(#nshadow)">
+        <polygon points="680,640 714,665 680,690 646,665"/>
+        <text x="680" y="669" text-anchor="middle" font-size="9.5" font-weight="600">Retry?</text>
+      </g>
+
+      <!-- Human: circle center (980,665) r=40 -->
+      <g id="n-human" class="node hidden nHuman clickable" filter="url(#nshadow)">
+        <circle cx="980" cy="665" r="40"/>
+        <circle cx="980" cy="665" r="40" fill="url(#shine-r)" style="pointer-events:none"/>
+        <circle cx="980" cy="649" r="8.5" fill="none" stroke="#94a3b8" stroke-width="1.8" opacity="0.8" style="pointer-events:none"/>
+        <path d="M 962,670 Q 980,662 998,670" fill="none" stroke="#94a3b8" stroke-width="1.8" stroke-linecap="round" opacity="0.8" style="pointer-events:none"/>
+        <text x="980" y="691" text-anchor="middle" font-size="11" font-weight="600">Human</text>
+      </g>
+
+      <!-- ReAct counter badge -->
+      <g id="react-badge" style="opacity:0">
+        <rect x="490" y="304" width="82" height="22" rx="5" fill="#13112e" stroke="#3730a3" stroke-width="1.2"/>
+        <text id="react-text" x="531" y="319" text-anchor="middle" font-size="10" fill="#818cf8" font-weight="600">Iter 1 / 3</text>
+      </g>
+
+      <!-- Animated dot -->
+      <circle id="dot" r="5.5" fill="#818cf8" opacity="0"/>
+
+    </g><!-- /zoom-g -->
+    </svg>
+
+    <div id="zoom-controls">
+      <button class="zoom-btn" id="zoom-in"  title="Zoom in (+)">+</button>
+      <button class="zoom-btn" id="zoom-out" title="Zoom out (-)">−</button>
+      <div class="zoom-sep"></div>
+      <button class="zoom-btn" id="zoom-fit" title="Reset view" style="font-size:.65rem">FIT</button>
+    </div>
+
+    <button id="summary-trigger" onclick="openSummary()">✦ View full system summary</button>
+  </div>
+
+  <aside id="info-panel">
+    <span id="stage-badge" class="stage-badge">Stage 1 of 6</span>
+    <h2 id="stage-title">Basic LLM</h2>
+    <p id="step-label">Step 1 of 3</p>
+    <div class="divider"></div>
+    <p id="stage-desc">Loading…</p>
+    <details class="deeper">
+      <summary><span class="da">▶</span> Go deeper</summary>
+      <p id="deeper-text"></p>
+    </details>
+  </aside>
+</div>
+
+<footer id="controls">
+  <button class="ctrl-btn" id="btn-back" title="Step back (←)">&#9664;&#9664;</button>
+  <button class="ctrl-btn" id="btn-play" title="Play / Pause (Space)">&#9646;&#9646;</button>
+  <button class="ctrl-btn" id="btn-fwd"  title="Step forward (→)">&#9654;&#9654;</button>
+  <div id="scrubber-wrap">
+    <div id="stage-markers">
+      <span class="smark active">1 Basic LLM</span>
+      <span class="smark">2 Tools</span>
+      <span class="smark">3 ReAct</span>
+      <span class="smark">4 Memory</span>
+      <span class="smark">5 Multi-Agent</span>
+      <span class="smark">6 Errors</span>
+    </div>
+    <input type="range" id="scrubber" min="0" max="22" value="0" step="1"/>
+  </div>
+  <select id="speed-sel">
+    <option value="2400">Slow</option>
+    <option value="1600" selected>Normal</option>
+    <option value="800">Fast</option>
+  </select>
+</footer>
+
+<!-- Arrow tooltip -->
+<div id="arrow-tip">
+  <div class="at-header">
+    <div class="at-dot" id="at-dot"></div>
+    <div class="at-label" id="at-label"></div>
+  </div>
+  <div class="at-desc" id="at-desc"></div>
+</div>
+
+<!-- Node modal -->
+<div class="modal-bd" id="modal-bd" onclick="closeModal()"></div>
+<div id="node-modal">
+  <div class="m-head">
+    <div class="m-bar" id="m-bar"></div>
+    <div class="m-titles">
+      <div class="m-type" id="m-type"></div>
+      <div class="m-name" id="m-name"></div>
+    </div>
+    <button class="m-close" onclick="closeModal()">×</button>
+  </div>
+  <div class="m-body">
+    <p class="m-desc" id="m-desc"></p>
+    <div class="m-ct">Connected to</div>
+    <div class="m-conns" id="m-conns"></div>
+  </div>
+</div>
+
+<!-- Summary overlay -->
+<div id="summary-overlay">
+  <div class="so-badge">Complete System</div>
+  <h2 class="so-title">The Full AI Agent Stack</h2>
+  <p class="so-sub">Six building blocks that together form a complete, production-grade AI agent system. Each layer adds capability — and responsibility.</p>
+  <div class="so-grid">
+    <div class="sc s1"><div class="sc-ico">💬</div><div class="sc-num">Stage 1</div><div class="sc-title">Basic LLM</div><div class="sc-desc">A user sends a message; the model reads it and predicts a response, token by token. Every agent starts here.</div></div>
+    <div class="sc s2"><div class="sc-ico">🔧</div><div class="sc-num">Stage 2</div><div class="sc-title">Tool Calling</div><div class="sc-desc">The model can call external APIs — web search, code execution — to go beyond its training data in real time.</div></div>
+    <div class="sc s3"><div class="sc-ico">🔄</div><div class="sc-num">Stage 3</div><div class="sc-title">ReAct Loop</div><div class="sc-desc">Thought → Action → Observation, repeated until the agent gathers enough information for a final answer.</div></div>
+    <div class="sc s4"><div class="sc-ico">🧠</div><div class="sc-num">Stage 4</div><div class="sc-title">Memory &amp; Context</div><div class="sc-desc">Long-term memory (RAG) lets agents handle tasks that exceed the context window — spanning hours or entire projects.</div></div>
+    <div class="sc s5"><div class="sc-ico">🤝</div><div class="sc-num">Stage 5</div><div class="sc-title">Multi-Agent</div><div class="sc-desc">An Orchestrator breaks the goal into subtasks and delegates to specialist agents — Researcher, Coder, Critic — in parallel.</div></div>
+    <div class="sc s6"><div class="sc-ico">🛡️</div><div class="sc-num">Stage 6</div><div class="sc-title">Failure &amp; Recovery</div><div class="sc-desc">Robust agents detect failures, retry with backoff, and escalate to a human when they can't self-recover.</div></div>
+  </div>
+  <div class="so-acts">
+    <button class="so-btn so-btn-p" onclick="closeSummary(); restartWalk()">↺ Restart walkthrough</button>
+    <button class="so-btn so-btn-s" onclick="closeSummary()">View diagram</button>
+  </div>
+</div>
+
+<script>
+// ─────────────────────────────────────────────────────────────────────────────
+//  STEP DATA
+// ─────────────────────────────────────────────────────────────────────────────
+const STEPS = [
+  {stage:0,show:['n-user','n-llm'],glow:[],dot:null,title:'Basic LLM Request',badge:'Stage 1 of 6',desc:'At its core, an AI model is a program that takes text in and produces text out. Every AI agent starts here — a simple back-and-forth between you and the model.',deeper:'LLMs (Large Language Models) are neural networks trained on vast text datasets. They predict the next token in a sequence, conditioned on all prior tokens in the context window.'},
+  {stage:0,show:['a-ul'],glow:['n-llm'],dot:'p-ul',title:'Basic LLM Request',badge:'Stage 1 of 6',desc:'You type a message. It\'s packaged into a "prompt" — a structured block of text — and sent to the model for processing.',deeper:'A prompt typically contains a system message (the model\'s instructions) and the conversation history. Everything is tokenised into integers before the model sees it.'},
+  {stage:0,show:['a-lu'],glow:['n-user'],dot:'p-lu',title:'Basic LLM Request',badge:'Stage 1 of 6',desc:'The model reads your message and predicts a response, word by word, then sends it back. Simple — and the foundation for everything that follows.',deeper:'Output tokens are sampled one at a time from a probability distribution over the vocabulary. "Temperature" and "top-p" control how creative vs. deterministic the output is.'},
+
+  {stage:1,show:['n-search','a-ls'],glow:['n-search','a-ls'],dot:'p-ls',title:'Tool Calling',badge:'Stage 2 of 6',desc:'What if you ask "What\'s the weather right now?" — something the model wasn\'t trained on? Instead of guessing, it can call a tool. Here it reaches out to Web Search.',deeper:'Tool calling (function calling) lets the model emit a structured JSON object naming a function and its arguments. The host app intercepts this, runs the function, and returns the result.'},
+  {stage:1,show:['a-sl'],glow:['n-llm','a-sl'],dot:'p-sl',title:'Tool Calling',badge:'Stage 2 of 6',desc:'The search tool returns its findings. The model reads the results and uses them to write a well-informed, up-to-date answer.',deeper:'The tool\'s result is appended to the conversation as a special "tool message". The model then generates a final reply conditioned on both the original question and the tool output.'},
+  {stage:1,show:['n-code','a-lc'],glow:['n-code','a-lc'],dot:'p-lc',title:'Tool Calling',badge:'Stage 2 of 6',desc:'Agents aren\'t limited to one tool. Here\'s a Code Runner — the model can write a program, execute it in a sandbox, and use the output. Different tools for different jobs.',deeper:'Common tool types: web search, code execution (sandboxed), database queries, file I/O, browser automation, and external API calls. The model chooses which to use.'},
+  {stage:1,show:['a-cl'],glow:['n-llm','a-cl'],dot:'p-cl',title:'Tool Calling',badge:'Stage 2 of 6',desc:'The code result comes back, the model incorporates it, and delivers a final answer. With tools, the model is no longer limited to what it learned during training.',deeper:'Parallel tool calling allows the model to invoke multiple tools simultaneously in a single turn, collecting all results before generating a response — reducing total latency.'},
+
+  {stage:2,show:['a-react'],glow:[],dot:null,reactIter:1,title:'The ReAct Loop',badge:'Stage 3 of 6',desc:'Complex tasks need multiple steps. The ReAct pattern (Reason + Act) is the engine behind most agents: think about what to do, do it, observe the result — then think again.',deeper:'ReAct (Yao et al., 2022) interleaves reasoning traces ("Thought: ...") and tool calls ("Action: ...") in the model\'s output, giving it a working memory over multiple steps.'},
+  {stage:2,show:[],glow:['n-llm'],dot:null,reactIter:1,title:'The ReAct Loop — Thought',badge:'Stage 3 of 6',desc:'Thought: "To answer this, I need to find Tokyo\'s population and land area." The agent reasons about what it needs before taking any action.',deeper:'The thought is generated as part of the model output before the action — a form of chain-of-thought reasoning that improves accuracy on multi-step tasks.'},
+  {stage:2,show:[],glow:['a-ls','n-search'],dot:'p-ls',reactIter:1,title:'The ReAct Loop — Action',badge:'Stage 3 of 6',desc:'Action: the agent calls Web Search. It\'s acting on its reasoning, reaching outside itself to gather information it needs.',deeper:'The controller intercepts the "Action:" output, routes it to the appropriate tool handler, executes it, and formats the result as an Observation.'},
+  {stage:2,show:[],glow:['a-sl','n-llm'],dot:'p-sl',reactIter:2,title:'The ReAct Loop — Observation',badge:'Stage 3 of 6',desc:'Observation: "Tokyo population is 13.96 million." The result is added to the context. Does the agent have everything it needs? Not yet — it still needs the land area.',deeper:'The observation is appended to the prompt. The growing context means the model can "remember" all prior thoughts and observations within a single multi-step run.'},
+  {stage:2,show:[],glow:['a-react'],dot:null,reactIter:3,title:'The ReAct Loop — Looping',badge:'Stage 3 of 6',desc:'The loop repeats — Thought → Action → Observation — until the agent has everything it needs. It keeps going until it\'s confident enough to give a final answer.',deeper:'A maximum iteration limit (e.g., 10) prevents infinite loops. If the limit is hit, the system surfaces the best partial result or raises an error.'},
+  {stage:2,show:[],glow:['n-llm','a-lu'],dot:'p-lu',reactIter:3,title:'The ReAct Loop — Final Answer',badge:'Stage 3 of 6',desc:'After a few iterations the agent has all the pieces. It assembles a final answer and delivers it to you. The loop is done.',deeper:'The loop terminates when the model outputs a "Final Answer:" token rather than another "Action:". The controller detects this pattern and ends the run.'},
+
+  {stage:3,show:['n-mem','a-lm'],glow:['n-mem','a-lm'],dot:'p-lm',title:'Memory & Context',badge:'Stage 4 of 6',desc:'The context window — how much the model can hold in "working memory" — has a hard limit. For longer tasks, agents need to store and retrieve information from outside that window.',deeper:'Modern models support 128k–200k token contexts, but even these can be exhausted by long conversations, large documents, or multi-hour agent runs. External memory solves this.'},
+  {stage:3,show:['a-ml'],glow:['n-llm','a-ml'],dot:'p-ml',title:'Memory & Context',badge:'Stage 4 of 6',desc:'The agent queries its memory store — like a personal search engine — and retrieves only the most relevant past information. It\'s injected into the prompt right when needed.',deeper:'This is Retrieval-Augmented Generation (RAG). Documents are chunked, converted to embedding vectors, and stored in a vector database. Retrieval uses approximate nearest-neighbor search.'},
+  {stage:3,show:[],glow:['n-mem','n-llm'],dot:null,title:'Memory & Context',badge:'Stage 4 of 6',desc:'With memory, an agent can handle tasks that span hours, days, or entire projects — far beyond what any single context window could hold.',deeper:'Memory architectures vary: episodic (event logs), semantic (factual embeddings), and procedural (learned skills). Some systems use multiple tiers — fast in-context plus slower vector retrieval.'},
+
+  {stage:4,show:['n-agentA','a-oa'],glow:['n-llm','a-oa'],dot:'p-oa',title:'Multi-Agent Orchestration',badge:'Stage 5 of 6',desc:'Some tasks are too complex for one agent. The LLM now acts as an Orchestrator — it breaks a big goal into subtasks and delegates them to specialist agents.',deeper:'Multi-agent topologies include: star (one orchestrator, many workers), pipeline (sequential handoffs), and graph (arbitrary routing). The orchestrator typically uses structured output to route tasks.'},
+  {stage:4,show:['n-agentB','a-ob','n-agentC','a-oc'],glow:['n-agentA','n-agentB','n-agentC'],dot:null,title:'Multi-Agent Orchestration',badge:'Stage 5 of 6',desc:'Each subagent is specialised: a Researcher gathers information, a Coder writes and runs programs, a Critic reviews the output. They can all work simultaneously.',deeper:'Subagents can be the same model with different system prompts, or entirely different models. Parallelism is achieved by dispatching tasks concurrently.'},
+  {stage:4,show:['a-as'],glow:['n-agentA','n-search','a-as'],dot:'p-as',title:'Multi-Agent Orchestration',badge:'Stage 5 of 6',desc:'Subagents can use the same tools we saw earlier. The Researcher calls Web Search; the Coder uses the Code Runner. Each agent has access to its own relevant toolset.',deeper:'Tool access can be scoped per-agent for security (principle of least privilege). The orchestrator may also have its own tools — for aggregation, routing, and synthesis.'},
+  {stage:4,show:['a-ao','a-bo','a-co'],glow:['n-llm','a-ao','a-bo','a-co'],dot:null,title:'Multi-Agent Orchestration',badge:'Stage 5 of 6',desc:'When each subagent finishes, it returns its results to the Orchestrator. The Orchestrator synthesises everything into a final answer — far better than any single agent alone.',deeper:'Aggregation strategies: concatenation, a synthesis LLM call, voting among agents (for reliability), or structured merging of typed outputs.'},
+
+  {stage:5,show:['n-err','a-ed'],glow:['n-err','n-search','a-ed'],dot:null,title:'Failure & Recovery',badge:'Stage 6 of 6',desc:'Agents aren\'t perfect. Tools can time out, APIs return unexpected data, or the model misunderstands a task. A well-designed agent detects failure and responds to it.',deeper:'Failure detection: checking tool response schemas, output validation via a second model call, self-critique prompting, and timeout handlers.'},
+  {stage:5,show:['n-dec'],glow:['n-dec'],dot:null,title:'Failure & Recovery — Decision',badge:'Stage 6 of 6',desc:'The agent reaches a decision point: retry on its own, or ask a human for help? This branching logic is what separates a fragile script from a robust agent.',deeper:'Decision policies can be rule-based (retry N times, then escalate) or model-driven (the LLM reasons about whether to escalate based on the error type and severity).'},
+  {stage:5,show:['a-dr'],glow:['a-dr'],dot:null,title:'Failure & Recovery — Retry',badge:'Stage 6 of 6',desc:'Option 1: Retry. The agent tries the tool again — perhaps with modified parameters or after a short wait. Many transient errors resolve on their own.',deeper:'Retry strategies: fixed delay, exponential backoff with jitter. Some systems modify tool arguments on retry based on the error message (self-correcting prompting).'},
+  {stage:5,show:['n-human','a-dh'],glow:['n-human','a-dh'],dot:'p-dh',title:'Failure & Recovery — Escalate',badge:'Stage 6 of 6',desc:'Option 2: Escalate. For errors that retrying can\'t fix, the agent hands control to a human. This "human in the loop" pattern keeps AI systems safe and accountable.',deeper:'Human-in-the-loop (HITL) is critical for high-stakes tasks. Implementations range from a Slack notification to a full task queue for human review — or a hard interrupt in the workflow.'},
+];
+
+const STAGE_STARTS = [0,3,7,12,15,19];
+
+const ALL_IDS = [
+  'n-user','n-llm','n-search','n-code','n-mem',
+  'n-agentA','n-agentB','n-agentC','n-err','n-dec','n-human',
+  'a-ul','a-lu','a-ls','a-sl','a-lc','a-cl',
+  'a-react','a-lm','a-ml',
+  'a-oa','a-ao','a-ob','a-bo','a-oc','a-co','a-as',
+  'a-ed','a-dh','a-dr',
+];
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  ARROW INFO DATA
+// ─────────────────────────────────────────────────────────────────────────────
+const ARROW_INFO = {
+  'a-ul':{ label:'User → LLM', color:'#64748b', desc:'The user\'s message is packaged into a prompt — including the system instructions and conversation history — and sent to the model for processing.' },
+  'a-lu':{ label:'LLM → User', color:'#64748b', desc:'The model\'s response is returned token by token. What looks like typing is the model streaming its predictions, one word at a time.' },
+  'a-ls':{ label:'LLM calls Web Search', color:'#f59e0b', desc:'The model emits a structured tool-call object: {"tool": "web_search", "args": {"query": "..."}}, which the host app intercepts and routes to the search API.' },
+  'a-sl':{ label:'Web Search → LLM', color:'#f59e0b', desc:'Search results are returned as a "tool result" message and appended to the conversation. The model reads these results before generating its final response.' },
+  'a-lc':{ label:'LLM calls Code Runner', color:'#f59e0b', desc:'The model writes code and requests execution in a sandboxed environment — no network, limited filesystem access. This prevents malicious code from causing harm.' },
+  'a-cl':{ label:'Code Runner → LLM', color:'#f59e0b', desc:'The code\'s stdout and any errors are returned as an observation. The model can then read the output, fix bugs, and run the code again in a second iteration.' },
+  'a-react':{ label:'ReAct Loop', color:'#818cf8', desc:'The iterative Thought→Action→Observation cycle. Each loop adds more information to the context window until the agent reaches a "Final Answer:" or hits its maximum iteration count.' },
+  'a-lm':{ label:'LLM queries Memory', color:'#14b8a6', desc:'The agent converts the current task into a dense embedding vector and performs an approximate nearest-neighbor search in the vector database to find relevant past information.' },
+  'a-ml':{ label:'Memory → LLM', color:'#14b8a6', desc:'The top-k most semantically similar memory chunks are retrieved and injected into the prompt, giving the model relevant context without exceeding the context window limit.' },
+  'a-oa':{ label:'Orchestrator → Researcher', color:'#818cf8', desc:'The Orchestrator delegates a research task using structured output: {"agent": "researcher", "task": "Find X"}, routing it to the Researcher subagent.' },
+  'a-ao':{ label:'Researcher → Orchestrator', color:'#818cf8', desc:'The Researcher returns its findings. The Orchestrator accumulates results from all subagents before synthesising a final response.' },
+  'a-ob':{ label:'Orchestrator → Coder', color:'#818cf8', desc:'The Orchestrator delegates a coding subtask to the Coder agent — often running in parallel with the Researcher, saving time on complex multi-step tasks.' },
+  'a-bo':{ label:'Coder → Orchestrator', color:'#818cf8', desc:'The Coder returns the code it wrote and the execution output (or error). The Orchestrator decides whether to accept, revise, or send back to the Coder for a fix.' },
+  'a-oc':{ label:'Orchestrator → Critic', color:'#818cf8', desc:'The combined output is sent to the Critic agent for quality review. The Critic checks for errors, hallucinations, and whether the output meets the original goal.' },
+  'a-co':{ label:'Critic → Orchestrator', color:'#818cf8', desc:'The Critic\'s review is returned. If issues are found, the Orchestrator may loop back to revise. If approved, the final answer is assembled and returned to the user.' },
+  'a-as':{ label:'Researcher uses Web Search', color:'#f59e0b', desc:'Subagents have their own tool access. The Researcher calls Web Search exactly as the Orchestrator can — tool calling works the same way at every level of the agent hierarchy.' },
+  'a-ed':{ label:'Failure detected', color:'#ef4444', desc:'When a tool returns an error, times out, or produces output that fails validation, the system routes control to a decision point rather than crashing or silently failing.' },
+  'a-dh':{ label:'Escalate to Human', color:'#64748b', desc:'If automatic recovery fails, a notification is sent to a human operator — via Slack, a task queue, or a direct interrupt. The agent pauses and waits for human guidance.' },
+  'a-dr':{ label:'Retry', color:'#22c55e', desc:'The agent retries the failed operation, sometimes with modified arguments or after an exponential-backoff delay. Many transient failures (rate limits, timeouts) resolve on retry.' },
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  NODE INFO DATA
+// ─────────────────────────────────────────────────────────────────────────────
+const NODE_INFO = {
+  'n-user':{ label:'User', type:'Human', color:'#64748b', desc:'The human initiating the interaction. Every agent run begins with a user message — a question, a goal, or a task to complete.', conns:[{id:'n-llm',name:'LLM / Orchestrator',rel:'Sends messages to · receives responses from',color:'#6366f1'}] },
+  'n-llm':{ label:'LLM / Orchestrator', type:'AI Model', color:'#6366f1', desc:'The Large Language Model is the brain of the system. It reads the conversation, reasons about what to do, and produces text or tool calls. In multi-agent mode it becomes the Orchestrator, coordinating specialist agents.', conns:[{id:'n-user',name:'User',rel:'Responds to',color:'#64748b'},{id:'n-search',name:'Web Search',rel:'Calls (tool use)',color:'#f59e0b'},{id:'n-code',name:'Code Runner',rel:'Calls (tool use)',color:'#f59e0b'},{id:'n-mem',name:'Memory Store',rel:'Queries and recalls from',color:'#14b8a6'},{id:'n-agentA',name:'Researcher',rel:'Delegates to',color:'#818cf8'},{id:'n-agentB',name:'Coder',rel:'Delegates to',color:'#818cf8'},{id:'n-agentC',name:'Critic',rel:'Delegates to',color:'#818cf8'}] },
+  'n-search':{ label:'Web Search', type:'External Tool', color:'#f59e0b', desc:'A live web search API. When the LLM needs current information it wasn\'t trained on, it emits a tool call. The host app executes the search and returns the results as text.', conns:[{id:'n-llm',name:'LLM / Orchestrator',rel:'Called by',color:'#6366f1'},{id:'n-agentA',name:'Researcher',rel:'Also used by',color:'#818cf8'}] },
+  'n-code':{ label:'Code Runner', type:'External Tool', color:'#f59e0b', desc:'A sandboxed code execution environment. The model writes code, the runner executes it safely, and stdout (or any error) is returned as an observation.', conns:[{id:'n-llm',name:'LLM / Orchestrator',rel:'Called by',color:'#6366f1'}] },
+  'n-mem':{ label:'Memory Store', type:'Data Store', color:'#14b8a6', desc:'External long-term memory — typically a vector database. Past information is chunked into embeddings and stored. The most relevant memories are retrieved and injected into the prompt at each step.', conns:[{id:'n-llm',name:'LLM / Orchestrator',rel:'Queried by · returns data to',color:'#6366f1'}] },
+  'n-agentA':{ label:'Researcher', type:'Subagent', color:'#818cf8', desc:'A specialist subagent focused on finding information. Delegated a research question by the Orchestrator, it uses Web Search to gather facts and data, then reports its findings back.', conns:[{id:'n-llm',name:'Orchestrator',rel:'Delegated from · reports back to',color:'#6366f1'},{id:'n-search',name:'Web Search',rel:'Uses',color:'#f59e0b'}] },
+  'n-agentB':{ label:'Coder', type:'Subagent', color:'#818cf8', desc:'A specialist subagent for writing and executing code. Given a programming task by the Orchestrator, it writes code, runs it in the Code Runner, debugs errors, and returns the result.', conns:[{id:'n-llm',name:'Orchestrator',rel:'Delegated from · reports back to',color:'#6366f1'}] },
+  'n-agentC':{ label:'Critic', type:'Subagent', color:'#818cf8', desc:'A specialist subagent for quality assurance. It evaluates outputs from other agents, flags errors or inconsistencies, and ensures the final response meets the required standard.', conns:[{id:'n-llm',name:'Orchestrator',rel:'Reports back to',color:'#6366f1'}] },
+  'n-err':{ label:'Error Badge', type:'Failure Signal', color:'#ef4444', desc:'Indicates a tool or agent failure — an API timeout, unexpected response format, or model error. Detecting failures clearly is the first step in any robust recovery strategy.', conns:[{id:'n-dec',name:'Decision Point',rel:'Triggers',color:'#ef4444'}] },
+  'n-dec':{ label:'Decision Point', type:'Control Flow', color:'#ef4444', desc:'A branching logic node activated after failure. Should the agent retry automatically, or escalate to a human? This decision can be rule-based or model-driven.', conns:[{id:'n-llm',name:'LLM',rel:'Retry path loops back to',color:'#6366f1'},{id:'n-human',name:'Human',rel:'Escalation path leads to',color:'#64748b'}] },
+  'n-human':{ label:'Human in the Loop', type:'Human Oversight', color:'#64748b', desc:'When a failure can\'t be resolved automatically, control passes to a human operator who can inspect the situation, provide clarification, or approve the next action.', conns:[{id:'n-dec',name:'Decision Point',rel:'Escalated from',color:'#ef4444'}] },
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  STATE
+// ─────────────────────────────────────────────────────────────────────────────
+let cur = 0, playing = true, timer = null, dotRaf = null;
+
+const elBadge    = document.getElementById('stage-badge');
+const elTitle    = document.getElementById('stage-title');
+const elStep     = document.getElementById('step-label');
+const elDesc     = document.getElementById('stage-desc');
+const elDeeper   = document.getElementById('deeper-text');
+const btnPlay    = document.getElementById('btn-play');
+const scrubber   = document.getElementById('scrubber');
+const speedSel   = document.getElementById('speed-sel');
+const smarks     = document.querySelectorAll('.smark');
+const dotEl      = document.getElementById('dot');
+const llmTitle   = document.getElementById('llm-title');
+const llmSub     = document.getElementById('llm-sub');
+const reactBadge = document.getElementById('react-badge');
+const reactText  = document.getElementById('react-text');
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  APPLY STEP
+// ─────────────────────────────────────────────────────────────────────────────
+function applyStep(idx, skipDot) {
+  const step = STEPS[idx];
+  const visible = new Set();
+  for (let i = 0; i <= idx; i++) STEPS[i].show.forEach(id => visible.add(id));
+
+  ALL_IDS.forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const on = visible.has(id);
+    el.classList.toggle('visible', on);
+    el.classList.toggle('hidden', !on);
+  });
+
+  document.querySelectorAll('.glow').forEach(el => el.classList.remove('glow'));
+  step.glow.forEach(id => { const el = document.getElementById(id); if (el) el.classList.add('glow'); });
+
+  if (step.stage >= 4) { llmTitle.textContent = 'Orchestrator'; llmSub.textContent = 'AI Coordinator'; }
+  else                 { llmTitle.textContent = 'LLM';          llmSub.textContent = 'AI Model'; }
+
+  const showReact = step.reactIter !== undefined && visible.has('a-react');
+  reactBadge.style.opacity = showReact ? '1' : '0';
+  if (showReact) reactText.textContent = `Iter ${step.reactIter} / 3`;
+
+  elBadge.textContent  = step.badge;
+  elTitle.textContent  = step.title;
+  elDeeper.textContent = step.deeper || '';
+
+  const stageSteps = STEPS.filter(s => s.stage === step.stage);
+  elStep.textContent = `Step ${stageSteps.indexOf(step)+1} of ${stageSteps.length}`;
+
+  elDesc.style.opacity = '0';
+  setTimeout(() => { elDesc.textContent = step.desc; elDesc.style.opacity = '1'; }, 140);
+
+  scrubber.value = idx;
+  smarks.forEach((m, i) => m.classList.toggle('active', i === step.stage));
+
+  if (!skipDot && step.dot) animateDot(step.dot, step.stage);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  DOT ANIMATION
+// ─────────────────────────────────────────────────────────────────────────────
+function animateDot(pathId, stage) {
+  const path = document.getElementById(pathId);
+  if (!path) return;
+  if (dotRaf) { cancelAnimationFrame(dotRaf); dotEl.setAttribute('opacity', 0); }
+  const colors = ['#818cf8','#f59e0b','#6366f1','#14b8a6','#818cf8','#ef4444'];
+  dotEl.setAttribute('fill', colors[stage] || '#818cf8');
+  dotEl.setAttribute('opacity', 1);
+  const len = path.getTotalLength();
+  const dur = 620;
+  let start = null;
+  function tick(ts) {
+    if (!start) start = ts;
+    const t = Math.min((ts - start) / dur, 1);
+    try { const pt = path.getPointAtLength(t * len); dotEl.setAttribute('cx', pt.x); dotEl.setAttribute('cy', pt.y); } catch(_) {}
+    if (t < 1) dotRaf = requestAnimationFrame(tick);
+    else dotEl.setAttribute('opacity', 0);
+  }
+  dotRaf = requestAnimationFrame(tick);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  PLAYBACK
+// ─────────────────────────────────────────────────────────────────────────────
+function spd() { return parseInt(speedSel.value, 10); }
+
+function scheduleNext() {
+  clearTimeout(timer);
+  if (!playing) return;
+  timer = setTimeout(() => {
+    if (cur < STEPS.length - 1) { cur++; applyStep(cur, false); scheduleNext(); }
+    else { playing = false; btnPlay.innerHTML = '&#9654;'; document.getElementById('summary-trigger').classList.add('show'); }
+  }, spd());
+}
+
+function togglePlay() {
+  playing = !playing;
+  btnPlay.innerHTML = playing ? '&#9646;&#9646;' : '&#9654;';
+  if (playing) { if (cur >= STEPS.length - 1) { cur = 0; applyStep(0, true); } scheduleNext(); }
+  else clearTimeout(timer);
+}
+
+function restartWalk() {
+  clearTimeout(timer); cur = 0; playing = true;
+  btnPlay.innerHTML = '&#9646;&#9646;';
+  applyStep(0, true); scheduleNext();
+  document.getElementById('summary-trigger').classList.remove('show');
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  CONTROLS
+// ─────────────────────────────────────────────────────────────────────────────
+btnPlay.addEventListener('click', togglePlay);
+document.getElementById('btn-back').addEventListener('click', () => {
+  clearTimeout(timer); playing = false; btnPlay.innerHTML = '&#9654;';
+  if (cur > 0) { cur--; applyStep(cur, true); }
+});
+document.getElementById('btn-fwd').addEventListener('click', () => {
+  clearTimeout(timer); playing = false; btnPlay.innerHTML = '&#9654;';
+  if (cur < STEPS.length - 1) { cur++; applyStep(cur, false); }
+});
+scrubber.addEventListener('input', () => {
+  clearTimeout(timer); playing = false; btnPlay.innerHTML = '&#9654;';
+  cur = parseInt(scrubber.value, 10); applyStep(cur, true);
+});
+speedSel.addEventListener('change', () => { if (playing) { clearTimeout(timer); scheduleNext(); } });
+smarks.forEach((m, i) => m.addEventListener('click', () => {
+  clearTimeout(timer); playing = false; btnPlay.innerHTML = '&#9654;';
+  cur = STAGE_STARTS[i]; applyStep(cur, true);
+}));
+
+document.addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+  if (e.code === 'Space')      { e.preventDefault(); togglePlay(); }
+  if (e.code === 'ArrowRight') { document.getElementById('btn-fwd').click(); }
+  if (e.code === 'ArrowLeft')  { document.getElementById('btn-back').click(); }
+  if (e.key >= '1' && e.key <= '6') {
+    const i = parseInt(e.key) - 1;
+    if (STAGE_STARTS[i] !== undefined) {
+      clearTimeout(timer); playing = false; btnPlay.innerHTML = '&#9654;';
+      cur = STAGE_STARTS[i]; applyStep(cur, true);
+    }
+  }
+  if (e.code === 'Escape') { closeModal(); closeArrowTip(); }
+  if (e.key === '+' || e.key === '=') zoomCenter(1.2);
+  if (e.key === '-') zoomCenter(1/1.2);
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  ZOOM & PAN
+// ─────────────────────────────────────────────────────────────────────────────
+const svgEl = document.getElementById('diagram');
+const zoomG = document.getElementById('zoom-g');
+const VBW = 1100, VBH = 580;
+let zoom = {x:0,y:0,s:1};
+let panning = false, panStart = {x:0,y:0}, zoomSnap = {x:0,y:0}, dragDist = 0;
+
+function applyZoom() { zoomG.setAttribute('transform', `translate(${zoom.x},${zoom.y}) scale(${zoom.s})`); }
+
+function svgPoint(clientX, clientY) {
+  const r = svgEl.getBoundingClientRect();
+  return { x: (clientX - r.left) * VBW / r.width, y: (clientY - r.top) * VBH / r.height };
+}
+
+function zoomAt(cx, cy, factor) {
+  const newS = Math.max(0.3, Math.min(6, zoom.s * factor));
+  const px = (cx - zoom.x) / zoom.s, py = (cy - zoom.y) / zoom.s;
+  zoom.x = cx - px * newS; zoom.y = cy - py * newS; zoom.s = newS;
+  applyZoom();
+}
+function zoomCenter(f) { zoomAt(VBW/2, VBH/2, f); }
+
+svgEl.addEventListener('wheel', e => {
+  e.preventDefault();
+  const p = svgPoint(e.clientX, e.clientY);
+  zoomAt(p.x, p.y, e.deltaY < 0 ? 1.12 : 1/1.12);
+}, { passive: false });
+
+svgEl.addEventListener('mousedown', e => {
+  if (e.button !== 0) return;
+  panning = true; dragDist = 0;
+  panStart = {x:e.clientX, y:e.clientY};
+  zoomSnap = {x:zoom.x, y:zoom.y};
+  svgEl.classList.add('panning');
+});
+window.addEventListener('mousemove', e => {
+  if (!panning) return;
+  const dx = e.clientX - panStart.x, dy = e.clientY - panStart.y;
+  dragDist = Math.sqrt(dx*dx + dy*dy);
+  if (dragDist > 3) {
+    const ratio = VBW / svgEl.getBoundingClientRect().width;
+    zoom.x = zoomSnap.x + dx * ratio; zoom.y = zoomSnap.y + dy * ratio;
+    applyZoom();
+  }
+});
+window.addEventListener('mouseup', () => { panning = false; svgEl.classList.remove('panning'); });
+
+let touches = {};
+svgEl.addEventListener('touchstart', e => { e.preventDefault(); Array.from(e.changedTouches).forEach(t => touches[t.identifier] = {x:t.clientX,y:t.clientY}); }, {passive:false});
+svgEl.addEventListener('touchmove', e => {
+  e.preventDefault();
+  if (e.touches.length === 2) {
+    const [t1,t2] = Array.from(e.touches), p1 = touches[t1.identifier], p2 = touches[t2.identifier];
+    if (p1 && p2) { const pd = Math.hypot(p1.x-p2.x, p1.y-p2.y), nd = Math.hypot(t1.clientX-t2.clientX, t1.clientY-t2.clientY); if (pd > 0) { const p = svgPoint((t1.clientX+t2.clientX)/2,(t1.clientY+t2.clientY)/2); zoomAt(p.x,p.y,nd/pd); } }
+    touches[t1.identifier]={x:t1.clientX,y:t1.clientY}; touches[t2.identifier]={x:t2.clientX,y:t2.clientY};
+  } else if (e.touches.length===1) {
+    const t=e.touches[0], prev=touches[t.identifier];
+    if (prev) { const ratio=VBW/svgEl.getBoundingClientRect().width; zoom.x+=(t.clientX-prev.x)*ratio; zoom.y+=(t.clientY-prev.y)*ratio; applyZoom(); }
+    touches[t.identifier]={x:t.clientX,y:t.clientY};
+  }
+}, {passive:false});
+svgEl.addEventListener('touchend', e => { Array.from(e.changedTouches).forEach(t => delete touches[t.identifier]); });
+
+document.getElementById('zoom-in').addEventListener('click', () => zoomCenter(1.3));
+document.getElementById('zoom-out').addEventListener('click', () => zoomCenter(1/1.3));
+document.getElementById('zoom-fit').addEventListener('click', () => { zoom={x:0,y:0,s:1}; applyZoom(); });
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  ARROW TOOLTIP
+// ─────────────────────────────────────────────────────────────────────────────
+const arrowTip = document.getElementById('arrow-tip');
+
+function openArrowTip(arrowId, clientX, clientY) {
+  const info = ARROW_INFO[arrowId];
+  if (!info) return;
+  document.getElementById('at-dot').style.background = info.color;
+  document.getElementById('at-label').textContent = info.label;
+  document.getElementById('at-desc').textContent  = info.desc;
+
+  const vw = window.innerWidth, vh = window.innerHeight;
+  let tx = clientX + 14, ty = clientY + 14;
+  if (tx + 285 > vw) tx = clientX - 285 - 14;
+  if (ty + 130 > vh) ty = clientY - 130 - 14;
+  arrowTip.style.left = tx + 'px';
+  arrowTip.style.top  = ty + 'px';
+  arrowTip.classList.add('show');
+}
+
+function closeArrowTip() { arrowTip.classList.remove('show'); }
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  NODE MODAL
+// ─────────────────────────────────────────────────────────────────────────────
+function openModal(nodeId) {
+  const info = NODE_INFO[nodeId];
+  if (!info) return;
+  document.getElementById('m-bar').style.background = info.color;
+  document.getElementById('m-type').textContent = info.type;
+  document.getElementById('m-name').textContent = info.label;
+  document.getElementById('m-desc').textContent = info.desc;
+
+  const connsEl = document.getElementById('m-conns');
+  connsEl.innerHTML = '';
+  const visConns = info.conns.filter(c => { const el = document.getElementById(c.id); return el && el.classList.contains('visible'); });
+
+  if (visConns.length === 0) {
+    connsEl.innerHTML = '<div style="font-size:.76rem;color:#2d3748;padding:4px 0">No connected nodes visible yet in this stage.</div>';
+  } else {
+    visConns.forEach(c => {
+      const d = document.createElement('div');
+      d.className = 'm-conn';
+      d.innerHTML = `<div class="m-cdot" style="background:${c.color}"></div><div><div class="m-cname">${c.name}</div><div class="m-crel">${c.rel}</div></div>`;
+      d.addEventListener('click', () => {
+        const el = document.getElementById(c.id);
+        if (el) { closeModal(); el.classList.add('glow'); setTimeout(() => el.classList.remove('glow'), 2200); }
+      });
+      connsEl.appendChild(d);
+    });
+  }
+
+  document.querySelectorAll('.adj').forEach(el => el.classList.remove('adj'));
+  visConns.forEach(c => { const el = document.getElementById(c.id); if (el) el.classList.add('adj'); });
+
+  document.getElementById('node-modal').classList.add('open');
+  document.getElementById('modal-bd').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('node-modal').classList.remove('open');
+  document.getElementById('modal-bd').classList.remove('open');
+  document.querySelectorAll('.adj').forEach(el => el.classList.remove('adj'));
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  UNIFIED CLICK HANDLER
+// ─────────────────────────────────────────────────────────────────────────────
+zoomG.addEventListener('click', e => {
+  if (dragDist > 5) return;
+
+  const nodeEl = e.target.closest('.node.visible.clickable');
+  if (nodeEl) { closeArrowTip(); openModal(nodeEl.id); return; }
+
+  const arrowEl = e.target.closest('.arrow.visible');
+  if (arrowEl) { openArrowTip(arrowEl.id, e.clientX, e.clientY); return; }
+
+  closeArrowTip();
+});
+
+document.addEventListener('click', e => {
+  if (!e.target.closest('#arrow-tip') && !e.target.closest('#diagram')) closeArrowTip();
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  SUMMARY
+// ─────────────────────────────────────────────────────────────────────────────
+function openSummary()  { document.getElementById('summary-overlay').classList.add('open'); }
+function closeSummary() { document.getElementById('summary-overlay').classList.remove('open'); }
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  INIT
+// ─────────────────────────────────────────────────────────────────────────────
+applyStep(0, true);
+scheduleNext();
+</script>
+</body>
+</html>

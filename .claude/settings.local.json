@@ -1,7 +1,15 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npx create-next-app@latest *)"
+      "Bash(npx create-next-app@latest *)",
+      "Bash(cp ../Test/index.html \"C:/Users/billn/documents/claude/site/public/gravity-flip.html\")",
+      "Bash(cp ../diagram/index.html \"C:/Users/billn/documents/claude/site/public/diagram.html\")",
+      "Bash(curl -s http://localhost:3000)",
+      "Bash(curl -s \"http://localhost:3000/projects/gravity-flip\")",
+      "Bash(npm install *)",
+      "Bash(npm run *)",
+      "WebFetch(domain:localhost)",
+      "Bash(git add *)"
     ]
   }
 }

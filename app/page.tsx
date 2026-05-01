@@ -27,12 +27,9 @@ export default function Home() {
     <div className="min-h-screen bg-white dark:bg-black">
       <header className="border-b border-zinc-200 dark:border-zinc-800">
         <div className="max-w-6xl mx-auto px-6 py-12">
-          <h1 className="text-4xl font-bold text-black dark:text-white mb-2">
+          <h1 className="text-4xl font-bold text-black dark:text-white">
             Projects
           </h1>
-          <p className="text-lg text-zinc-600 dark:text-zinc-400">
-            A collection of web projects built with modern technologies.
-          </p>
         </div>
       </header>
 

@@ -9,7 +9,20 @@
       "Bash(npm install *)",
       "Bash(npm run *)",
       "WebFetch(domain:localhost)",
-      "Bash(git add *)"
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(gh auth *)",
+      "Bash(gh repo *)",
+      "Bash(vercel link *)",
+      "Bash(vercel *)",
+      "Bash(nslookup tringu.site 8.8.8.8)",
+      "Bash(curl -s -I https://tringu.site)",
+      "Bash(cd C:\\\\\\\\Users\\\\\\\\billn\\\\\\\\documents\\\\\\\\claude)",
+      "Bash(findstr *)",
+      "Bash(powershell *)",
+      "Bash(curl -s https://stock-three-henna.vercel.app/debug)",
+      "Bash(curl -s https://stock-three-henna.vercel.app/)",
+      "Bash(curl *)"
     ]
   }
 }

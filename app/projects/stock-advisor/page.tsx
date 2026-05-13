@@ -16,19 +16,26 @@ export default function StockAdvisorPage() {
       <main className="max-w-6xl mx-auto px-6 py-16">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2">
-            <div className="relative bg-zinc-100 dark:bg-zinc-900 rounded-lg aspect-video flex items-center justify-center border border-zinc-200 dark:border-zinc-800 mb-6 overflow-hidden group">
-              <iframe
-                src="https://stock-three-henna.vercel.app"
-                title="Meridian Stock Advisor AI"
-                className="w-full h-full border-none"
-                loading="lazy"
-              />
-              <button
-                onClick={() => window.open('/projects/stock-advisor/fullscreen', '_blank')}
-                className="absolute top-4 right-4 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-4 py-2 rounded-lg transition-colors z-10 shadow-lg"
-              >
-                Open Full Screen ↗
-              </button>
+            <div className="bg-zinc-100 dark:bg-zinc-900 rounded-lg aspect-video flex flex-col items-center justify-center border border-zinc-200 dark:border-zinc-800 mb-6 p-8 text-center">
+              <div className="text-4xl mb-4">📊</div>
+              <h3 className="text-lg font-semibold text-black dark:text-white mb-2">Meridian Stock Advisor</h3>
+              <p className="text-zinc-600 dark:text-zinc-400 mb-6">A Python/FastAPI backend with React frontend for AI-powered stock recommendations</p>
+              <div className="flex gap-3 flex-wrap justify-center">
+                <a
+                  href="https://github.com/tri-ngu/stock"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-2 rounded-lg transition-colors"
+                >
+                  View on GitHub →
+                </a>
+                <button
+                  onClick={() => alert('To run locally: git clone https://github.com/tri-ngu/stock && cd stock && pip install -r requirements.txt && python backend/main.py')}
+                  className="bg-zinc-600 hover:bg-zinc-700 text-white font-semibold px-6 py-2 rounded-lg transition-colors"
+                >
+                  Run Locally
+                </button>
+              </div>
             </div>
             <div className="prose dark:prose-invert max-w-none">
               <h2 className="text-2xl font-bold text-black dark:text-white mb-4">About</h2>

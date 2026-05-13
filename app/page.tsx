@@ -21,6 +21,13 @@ export default function Home() {
       tech: ["HTML5", "JavaScript"],
       link: "/projects/diagram",
     },
+    {
+      id: "stock-advisor",
+      title: "Meridian · Stock Advisor AI",
+      description: "AI-powered investment advisor that builds personalized portfolios, screens stocks, and explains investment concepts in plain language.",
+      tech: ["FastAPI", "Python", "React", "Groq", "yfinance"],
+      link: "/projects/stock-advisor",
+    },
   ];
 
   return (

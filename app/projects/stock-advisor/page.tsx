@@ -16,12 +16,12 @@ export default function StockAdvisorPage() {
           <div className="lg:col-span-2">
             <div className="bg-zinc-100 dark:bg-zinc-900 rounded-lg aspect-video flex items-center justify-center border border-zinc-200 dark:border-zinc-800 mb-6">
               <a
-                href="https://github.com/tri-ngu/stock"
+                href="https://stock-three-henna.vercel.app"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors"
               >
-                View on GitHub →
+                Open App →
               </a>
             </div>
             <div className="prose dark:prose-invert max-w-none">
@@ -41,16 +41,10 @@ export default function StockAdvisorPage() {
                 <li>• Portfolio optimization using modern financial theory</li>
               </ul>
 
-              <h3 className="text-lg font-semibold text-black dark:text-white mb-3">Getting Started</h3>
+              <h3 className="text-lg font-semibold text-black dark:text-white mb-3">Start Using It</h3>
               <p className="text-zinc-600 dark:text-zinc-400 mb-4">
-                This is a Python/FastAPI backend with React frontend. To run locally:
+                Click the "Open App" button above to start getting AI-powered investment advice. The app will guide you through a preference survey to create a personalized portfolio.
               </p>
-              <ol className="text-zinc-600 dark:text-zinc-400 space-y-2 list-decimal pl-6 mb-6">
-                <li>Clone the repository from GitHub</li>
-                <li>Install Python 3.8+ and dependencies</li>
-                <li>Get a free Groq API key from console.groq.com</li>
-                <li>Run <code className="text-sm">python backend/main.py</code></li>
-              </ol>
 
               <h3 className="text-lg font-semibold text-black dark:text-white mb-3">Disclaimer</h3>
               <p className="text-zinc-600 dark:text-zinc-400 text-sm">
@@ -81,25 +75,25 @@ export default function StockAdvisorPage() {
                 </div>
                 <div>
                   <dt className="text-zinc-500 dark:text-zinc-400">Status</dt>
-                  <dd className="text-black dark:text-white">Open Source</dd>
+                  <dd className="text-black dark:text-white">Live on Vercel</dd>
                 </div>
                 <div>
                   <dt className="text-zinc-500 dark:text-zinc-400">AI Model</dt>
                   <dd className="text-black dark:text-white">Groq llama-3.3-70b</dd>
                 </div>
                 <div>
-                  <dt className="text-zinc-500 dark:text-zinc-400">License</dt>
-                  <dd className="text-black dark:text-white">Educational</dd>
+                  <dt className="text-zinc-500 dark:text-zinc-400">Backend</dt>
+                  <dd className="text-black dark:text-white">FastAPI + Vercel</dd>
                 </div>
               </dl>
 
               <a
-                href="https://github.com/tri-ngu/stock"
+                href="https://stock-three-henna.vercel.app"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg transition-colors"
               >
-                View Repo →
+                Open App →
               </a>
             </div>
           </aside>

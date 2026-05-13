@@ -22,7 +22,8 @@
       "Bash(powershell *)",
       "Bash(curl -s https://stock-three-henna.vercel.app/debug)",
       "Bash(curl -s https://stock-three-henna.vercel.app/)",
-      "Bash(curl *)"
+      "Bash(curl *)",
+      "Bash(git push *)"
     ]
   }
 }

@@ -1,5 +1,3 @@
-'use client';
-
 export default function StockAdvisorPage() {
   return (
     <div className="min-h-screen bg-white dark:bg-black">
@@ -9,33 +7,22 @@ export default function StockAdvisorPage() {
             ← Back to Projects
           </a>
           <h1 className="text-4xl font-bold text-black dark:text-white">Meridian · Stock Advisor AI</h1>
-          <p className="text-zinc-600 dark:text-zinc-400 mt-2">AI-powered investment advisor for personalized portfolio building</p>
+          <p className="text-zinc-600 dark:text-zinc-400 mt-2">AI-powered investment advisor with personalized portfolio building</p>
         </div>
       </header>
 
       <main className="max-w-6xl mx-auto px-6 py-16">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2">
-            <div className="bg-zinc-100 dark:bg-zinc-900 rounded-lg aspect-video flex flex-col items-center justify-center border border-zinc-200 dark:border-zinc-800 mb-6 p-8 text-center">
-              <div className="text-4xl mb-4">📊</div>
-              <h3 className="text-lg font-semibold text-black dark:text-white mb-2">Meridian Stock Advisor</h3>
-              <p className="text-zinc-600 dark:text-zinc-400 mb-6">A Python/FastAPI backend with React frontend for AI-powered stock recommendations</p>
-              <div className="flex gap-3 flex-wrap justify-center">
-                <a
-                  href="https://github.com/tri-ngu/stock"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-2 rounded-lg transition-colors"
-                >
-                  View on GitHub →
-                </a>
-                <button
-                  onClick={() => alert('To run locally: git clone https://github.com/tri-ngu/stock && cd stock && pip install -r requirements.txt && python backend/main.py')}
-                  className="bg-zinc-600 hover:bg-zinc-700 text-white font-semibold px-6 py-2 rounded-lg transition-colors"
-                >
-                  Run Locally
-                </button>
-              </div>
+            <div className="bg-zinc-100 dark:bg-zinc-900 rounded-lg aspect-video flex items-center justify-center border border-zinc-200 dark:border-zinc-800 mb-6">
+              <a
+                href="https://github.com/tri-ngu/stock"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors"
+              >
+                View on GitHub →
+              </a>
             </div>
             <div className="prose dark:prose-invert max-w-none">
               <h2 className="text-2xl font-bold text-black dark:text-white mb-4">About</h2>
@@ -45,27 +32,29 @@ export default function StockAdvisorPage() {
 
               <h3 className="text-lg font-semibold text-black dark:text-white mt-6 mb-3">Key Features</h3>
               <ul className="text-zinc-600 dark:text-zinc-400 space-y-2 mb-6">
-                <li>• <strong>AI Chat Interface</strong> - Talk to an intelligent stock investment advisor</li>
-                <li>• <strong>Stock Analysis</strong> - Get detailed information and metrics on any stock ticker</li>
-                <li>• <strong>Portfolio Building</strong> - Build diversified portfolios matched to your risk tolerance and goals</li>
-                <li>• <strong>Stock Screening</strong> - Find stocks based on fundamental criteria like P/E ratios and growth metrics</li>
-                <li>• <strong>Real Market Data</strong> - Powered by yfinance for current stock prices and historical analysis</li>
-                <li>• <strong>Educational</strong> - Learn investment concepts in beginner-friendly language</li>
-                <li>• <strong>Portfolio Optimization</strong> - Uses Mean-Variance optimization for Sharpe ratio maximization</li>
+                <li>• AI-powered chat interface for investment advice</li>
+                <li>• Detailed stock analysis and metrics</li>
+                <li>• Personalized portfolio building based on risk tolerance</li>
+                <li>• Stock screening with fundamental criteria</li>
+                <li>• Real-time market data via yfinance</li>
+                <li>• Educational investment concepts explained</li>
+                <li>• Portfolio optimization using modern financial theory</li>
               </ul>
 
-              <h3 className="text-lg font-semibold text-black dark:text-white mb-3">How It Works</h3>
-              <ol className="text-zinc-600 dark:text-zinc-400 space-y-2 mb-6 list-decimal list-inside">
-                <li>Answer questions about your investment goals, budget, and risk tolerance</li>
-                <li>The AI analyzes your profile and generates personalized recommendations</li>
-                <li>Real market data is fetched for recommended stocks</li>
-                <li>Portfolio is optimized using modern financial theory</li>
-                <li>Get detailed reasoning behind each recommendation</li>
+              <h3 className="text-lg font-semibold text-black dark:text-white mb-3">Getting Started</h3>
+              <p className="text-zinc-600 dark:text-zinc-400 mb-4">
+                This is a Python/FastAPI backend with React frontend. To run locally:
+              </p>
+              <ol className="text-zinc-600 dark:text-zinc-400 space-y-2 list-decimal pl-6 mb-6">
+                <li>Clone the repository from GitHub</li>
+                <li>Install Python 3.8+ and dependencies</li>
+                <li>Get a free Groq API key from console.groq.com</li>
+                <li>Run <code className="text-sm">python backend/main.py</code></li>
               </ol>
 
               <h3 className="text-lg font-semibold text-black dark:text-white mb-3">Disclaimer</h3>
-              <p className="text-zinc-600 dark:text-zinc-400 text-sm mb-4">
-                This is an educational tool providing AI-powered insights, not financial advice. Past performance does not guarantee future results. Always conduct your own research and consult a licensed financial advisor before making investment decisions.
+              <p className="text-zinc-600 dark:text-zinc-400 text-sm">
+                This is an educational tool providing AI-powered insights, not financial advice. Always conduct your own research and consult a licensed financial advisor before making investment decisions.
               </p>
             </div>
           </div>
@@ -92,29 +81,25 @@ export default function StockAdvisorPage() {
                 </div>
                 <div>
                   <dt className="text-zinc-500 dark:text-zinc-400">Status</dt>
-                  <dd className="text-black dark:text-white">Live</dd>
+                  <dd className="text-black dark:text-white">Open Source</dd>
                 </div>
                 <div>
                   <dt className="text-zinc-500 dark:text-zinc-400">AI Model</dt>
                   <dd className="text-black dark:text-white">Groq llama-3.3-70b</dd>
                 </div>
                 <div>
-                  <dt className="text-zinc-500 dark:text-zinc-400">Backend</dt>
-                  <dd className="text-black dark:text-white">FastAPI + Vercel</dd>
-                </div>
-                <div>
-                  <dt className="text-zinc-500 dark:text-zinc-400">Market Data</dt>
-                  <dd className="text-black dark:text-white">Real-time (yfinance)</dd>
+                  <dt className="text-zinc-500 dark:text-zinc-400">License</dt>
+                  <dd className="text-black dark:text-white">Educational</dd>
                 </div>
               </dl>
 
               <a
-                href="https://stock-three-henna.vercel.app"
+                href="https://github.com/tri-ngu/stock"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg transition-colors"
               >
-                Open in New Tab →
+                View Repo →
               </a>
             </div>
           </aside>

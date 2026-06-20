@@ -27,9 +27,10 @@ export default function TuiXanhPage() {
             <div className="prose dark:prose-invert max-w-none">
               <h2 className="text-2xl font-bold text-black dark:text-white mb-4">About</h2>
               <p className="text-zinc-600 dark:text-zinc-400 mb-4">
-                Túi Xanh (Green Bag) is a food rescue app inspired by Too Good To Go. It connects customers with
-                local restaurants in Vietnam that have surplus food at the end of the day, offering steep discounts
-                while reducing food waste. The UI is fully in Vietnamese.
+                Túi Xanh (Green Bag) is a food rescue app that connects customers with local restaurants in Vietnam
+                that have surplus food at the end of the day. Restaurants list discounted bags of leftover meals,
+                and customers can browse, reserve, and pick them up — reducing food waste while saving money.
+                The UI is fully in Vietnamese.
               </p>
 
               <h3 className="text-lg font-semibold text-black dark:text-white mt-6 mb-3">Features</h3>
@@ -44,7 +45,7 @@ export default function TuiXanhPage() {
 
               <h3 className="text-lg font-semibold text-black dark:text-white mb-3">Background</h3>
               <p className="text-zinc-600 dark:text-zinc-400 mb-4">
-                Built as a prototype exploring how a Too Good To Go-style service would look and feel
+                Built as a prototype exploring how a food rescue marketplace would look and feel
                 for the Vietnamese market. The app was migrated from an HTML prototype to a full
                 Vite + React + Tailwind stack, with Vietnamese copy throughout.
               </p>
@@ -80,8 +81,8 @@ export default function TuiXanhPage() {
                   <dd className="text-black dark:text-white">Live on Vercel</dd>
                 </div>
                 <div>
-                  <dt className="text-zinc-500 dark:text-zinc-400">Inspired by</dt>
-                  <dd className="text-black dark:text-white">Too Good To Go</dd>
+                  <dt className="text-zinc-500 dark:text-zinc-400">Focus</dt>
+                  <dd className="text-black dark:text-white">Food waste reduction</dd>
                 </div>
               </dl>
 

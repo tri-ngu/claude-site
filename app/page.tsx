@@ -28,6 +28,13 @@ export default function Home() {
       tech: ["FastAPI", "Python", "React", "Groq", "yfinance"],
       link: "/projects/stock-advisor",
     },
+    {
+      id: "tui-xanh",
+      title: "Túi Xanh · Food Rescue",
+      description: "A Vietnamese food rescue app inspired by Too Good To Go — browse discounted surplus meals from local restaurants and pick them up before they go to waste.",
+      tech: ["Vite", "React", "Tailwind CSS", "Lucide"],
+      link: "/projects/tui-xanh",
+    },
   ];
 
   return (
